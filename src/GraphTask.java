@@ -1,5 +1,3 @@
-import java.util.*;
-
 /** Container class to different classes, that makes the whole
  * set of classes one class formally.
  */
@@ -9,22 +7,30 @@ public class GraphTask {
    public static void main (String[] args) {
       GraphTask a = new GraphTask();
       a.run();
-      throw new RuntimeException ("Nothing implemented yet!"); // delete this
    }
 
    /** Actual main method to run examples and everything. */
    public void run() {
-      Graph g = new Graph ("G");
-      g.createRandomSimpleGraph (6, 9);
-      System.out.println (g);
-
-      // TODO!!! Your experiments here
+      Graph g = new Graph("G");
+      Vertex v1 = g.createVertex("1");
+      Vertex v2 = g.createVertex("2");
+      Vertex v3 = g.createVertex("3");
+      Vertex v4 = g.createVertex("4");
+      g.createArc("a1", v1, v2);
+      g.createArc("a2", v1, v3);
+      g.transitiveClosure();
    }
 
-   // TODO!!! add javadoc relevant to your problem
+   /**
+    Transitive closure of the matrix is the representation
+    of existence of a path for every vertex to every other vertex.
+    The task which asks to find transitive closure of the graph can be expressed like this:
+    "Given a graph G, find if the vertex i is reachable from j for all such pairs (i,j)".
+    */
+
    class Vertex {
 
-      private String id;
+      private final String id;
       private Vertex next;
       private Arc first;
       private int info = 0;
@@ -44,8 +50,6 @@ public class GraphTask {
       public String toString() {
          return id;
       }
-
-      // TODO!!! Your Vertex methods here!
    }
 
 
@@ -54,10 +58,10 @@ public class GraphTask {
     */
    class Arc {
 
-      private String id;
+      private final String id;
       private Vertex target;
       private Arc next;
-      private int info = 0;
+      private final int info = 0;
       // You can add more fields, if needed
 
       Arc (String s, Vertex v, Arc a) {
@@ -74,17 +78,16 @@ public class GraphTask {
       public String toString() {
          return id;
       }
-
-      // TODO!!! Your Arc methods here!
    } 
 
 
    class Graph {
 
-      private String id;
+      private final String id;
       private Vertex first;
       private int info = 0;
-      // You can add more fields, if needed
+
+      private boolean[][] tc; // additional field for transitive closure matrix
 
       Graph (String s, Vertex v) {
          id = s;
@@ -103,14 +106,14 @@ public class GraphTask {
          sb.append (nl);
          Vertex v = first;
          while (v != null) {
-            sb.append (v.toString());
+            sb.append (v);
             sb.append (" -->");
             Arc a = v.first;
             while (a != null) {
                sb.append (" ");
-               sb.append (a.toString());
+               sb.append (a);
                sb.append (" (");
-               sb.append (v.toString());
+               sb.append (v);
                sb.append ("->");
                sb.append (a.target.toString());
                sb.append (")");
@@ -147,7 +150,7 @@ public class GraphTask {
             return;
          Vertex[] varray = new Vertex [n];
          for (int i = 0; i < n; i++) {
-            varray [i] = createVertex ("v" + String.valueOf(n-i));
+            varray [i] = createVertex ("v" + (n - i));
             if (i > 0) {
                int vnr = (int)(Math.random()*i);
                createArc ("a" + varray [vnr].toString() + "_"
@@ -221,14 +224,53 @@ public class GraphTask {
             Vertex vj = vert [j];
             createArc ("a" + vi.toString() + "_" + vj.toString(), vi, vj);
             connected [i][j] = 1;
-            createArc ("a" + vj.toString() + "_" + vi.toString(), vj, vi);
+            createArc ("a" + vj + "_" + vi, vj, vi);
             connected [j][i] = 1;
             edgeCount--;  // a new edge happily created
          }
       }
 
-      // TODO!!! Your Graph methods here! Probably your solution belongs here.
+      /**The following method is based on the Depth-First Search(DFS) graph traversal method
+       *
+       * */
+      public void transitiveClosure() {
+         // First, create the adjacency matrix
+         int[][] adjMatrix = createAdjMatrix();
+
+         // Create a boolean matrix to store the transitive closure
+         tc = new boolean[adjMatrix.length][adjMatrix.length];
+
+         // For each vertex i, perform a DFS and mark all reachable vertices j
+         for (int i = 0; i < adjMatrix.length; i++) {
+            boolean[] visited = new boolean[adjMatrix.length];
+            dfs(i, i, visited, adjMatrix);
+         }
+
+         // Print the transitive closure matrix
+         System.out.println("Transitive closure:");
+         for (boolean[] booleans : tc) {
+            for (boolean aBoolean : booleans) {
+               System.out.print(aBoolean ? "1 " : "0 ");
+            }
+            System.out.println();
+         }
+      }
+
+      /**Actual DFS algorithm
+       * @param i is one of the vertex we want to explore
+       * @param j is another vertex we want to explore
+       * @param visited is a boolean matrix which marks the vertices we have already visited
+       * @param adjMatrix is an adjacency matrix for a given graph
+       * */
+      private void dfs(int i, int j, boolean[] visited, int[][] adjMatrix) {
+         visited[j] = true;
+         tc[i][j] = true;
+         for (int k = 0; k < adjMatrix.length; k++) {
+            if (adjMatrix[j][k] == 1 && !visited[k])
+               dfs(i, k, visited, adjMatrix);
+         }
+      }
+
    }
 
 } 
-

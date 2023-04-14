@@ -22,10 +22,10 @@ public class GraphTask {
    }
 
    /**
-    Transitive closure of the matrix is the representation
-    of existence of a path for every vertex to every other vertex.
-    The task which asks to find transitive closure of the graph can be expressed like this:
-    "Given a graph G, find if the vertex i is reachable from j for all such pairs (i,j)".
+    * Transitive closure of the matrix is the representation
+    * of existence of a path for every vertex to every other vertex.
+    * The task which asks to find transitive closure of the graph can be expressed like this:
+    * "Given a graph G, find if the vertex i is reachable from j for all such pairs (i,j)".
     */
 
    class Vertex {

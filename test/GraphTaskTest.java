@@ -12,6 +12,5 @@ public class GraphTaskTest {
       GraphTask.main (null);
       assertTrue ("There are no tests", true);
    }
-
 }
 

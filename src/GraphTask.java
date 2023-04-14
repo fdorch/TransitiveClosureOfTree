@@ -19,6 +19,26 @@ public class GraphTask {
       g.createArc("a1", v1, v2);
       g.createArc("a2", v1, v3);
       g.transitiveClosure();
+
+      Graph g1 = new Graph("G");
+      Vertex V1 = g1.createVertex("1");
+      Vertex V2 = g1.createVertex("2");
+      Vertex V3 = g1.createVertex("3");
+      Vertex V4 = g1.createVertex("4");
+      g1.createArc("a1", V1, V2);
+      g1.createArc("a2", V1, V3);
+      g1.createArc("a3", V2, V1);
+      g1.createArc("a4", V2, V3);
+      g1.createArc("a5", V1, V4);
+      g1.transitiveClosure();
+
+      Graph g2 = new Graph("G");
+      g2.createRandomSimpleGraph(2001, 2002);
+      long start = System.nanoTime();
+      g2.transitiveClosure();
+      long finish = System.nanoTime();
+      long diff = finish - start;
+      System.out.printf("%34s%11d%n", "time (ms): ", diff / 1000000); // average : 118002(ms)
    }
 
    /**
@@ -78,7 +98,7 @@ public class GraphTask {
       public String toString() {
          return id;
       }
-   } 
+   }
 
 
    class Graph {
@@ -154,9 +174,9 @@ public class GraphTask {
             if (i > 0) {
                int vnr = (int)(Math.random()*i);
                createArc ("a" + varray [vnr].toString() + "_"
-                  + varray [i].toString(), varray [vnr], varray [i]);
+                       + varray [i].toString(), varray [vnr], varray [i]);
                createArc ("a" + varray [i].toString() + "_"
-                  + varray [vnr].toString(), varray [i], varray [vnr]);
+                       + varray [vnr].toString(), varray [i], varray [vnr]);
             } else {}
          }
       }
@@ -200,8 +220,8 @@ public class GraphTask {
          if (n > 2500)
             throw new IllegalArgumentException ("Too many vertices: " + n);
          if (m < n-1 || m > n*(n-1)/2)
-            throw new IllegalArgumentException 
-               ("Impossible number of edges: " + m);
+            throw new IllegalArgumentException
+                    ("Impossible number of edges: " + m);
          first = null;
          createRandomTree (n);       // n-1 edges created here
          Vertex[] vert = new Vertex [n];
@@ -216,9 +236,9 @@ public class GraphTask {
          while (edgeCount > 0) {
             int i = (int)(Math.random()*n);  // random source
             int j = (int)(Math.random()*n);  // random target
-            if (i==j) 
+            if (i==j)
                continue;  // no loops
-            if (connected [i][j] != 0 || connected [j][i] != 0) 
+            if (connected [i][j] != 0 || connected [j][i] != 0)
                continue;  // no multiple edges
             Vertex vi = vert [i];
             Vertex vj = vert [j];
@@ -231,7 +251,6 @@ public class GraphTask {
       }
 
       /**The following method is based on the Depth-First Search(DFS) graph traversal method
-       *
        * */
       public void transitiveClosure() {
          // First, create the adjacency matrix
@@ -273,4 +292,4 @@ public class GraphTask {
 
    }
 
-} 
+}

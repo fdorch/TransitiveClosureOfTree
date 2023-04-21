@@ -1,3 +1,6 @@
+import java.util.HashMap;
+import java.util.Map;
+
 /** Container class to different classes, that makes the whole
  * set of classes one class formally.
  */
@@ -13,38 +16,13 @@ public class GraphTask {
    public void run() {
       // average : 118002(ms) for graph with 2000+ vertices
       Graph g = new Graph("G");
-      Vertex v1 = g.createVertex("1");
-      Vertex v2 = g.createVertex("2");
-      Vertex v3 = g.createVertex("3");
-      Vertex v4 = g.createVertex("4");
-      g.createArc("a1", v1, v2);
-      g.createArc("a2", v1, v3);
-      g.createArc("a3", v1, v4);
-      g.createArc("a4", v2, v3);
-      g.createArc("a5", v2, v4);
-      g.createArc("a6", v3, v4);
-      g.createArc("a7", v2, v1);
-      g.createArc("a8", v4, v1);
+      g.createRandomSimpleGraph(6, 9);
+      System.out.println(g);
 
-      // print the original graph
-      System.out.println("Original graph:");
-      System.out.println(g.toString());
-
-      // compute the transitive closure of the graph
       Graph tc = g.transitiveClosure();
-
-      // print the transitive closure of the graph
-      System.out.println("Transitive closure of the graph:");
-      System.out.println(tc.toString());
+      System.out.println(tc);
 
    }
-
-   /**
-    * Transitive closure of the matrix is the representation
-    * of existence of a path for every vertex to every other vertex.
-    * The task which asks to find transitive closure of the graph can be expressed like this:
-    * "Given a graph G, find if the vertex i is reachable from j for all such pairs (i,j)".
-    */
 
    class Vertex {
 
@@ -65,9 +43,7 @@ public class GraphTask {
       }
 
       @Override
-      public String toString() {
-         return id;
-      }
+      public String toString() {return id;}
    }
 
 
@@ -80,8 +56,6 @@ public class GraphTask {
       private Vertex target;
       private Arc next;
       private final int info = 0;
-      // You can add more fields, if needed
-
       Arc (String s, Vertex v, Arc a) {
          id = s;
          target = v;
@@ -89,13 +63,10 @@ public class GraphTask {
       }
 
       Arc (String s) {
-         this (s, null, null);
-      } // First, create the adjacency matrix
+         this (s, null, null);}
 
       @Override
-      public String toString() {
-         return id;
-      }
+      public String toString() {return id;}
    }
 
 
@@ -111,10 +82,7 @@ public class GraphTask {
          id = s;
          first = v;
       }
-
-      Graph (String s) {
-         this (s, null);
-      }
+      Graph (String s) {this (s, null);}
 
       @Override
       public String toString() {
@@ -248,82 +216,67 @@ public class GraphTask {
          }
       }
 
+      /**
+       * Transitive closure of the matrix is the representation
+       * of existence of a path for every vertex to every other vertex.
+       * The task which asks to find transitive closure of the graph can be expressed like this:
+       * "Given a graph G, find if the vertex i is reachable from j for all such pairs (i,j)".
+       * The following method returns a new graph object with the transitive closure of this graph.
+       * The transitive closure is calculated using the Floyd-Warshall algorithm.
+       */
       public Graph transitiveClosure() {
-         Graph tcGraph = new Graph("Transitive Closure");
+         // Create a new graph with the same vertices
+         Graph tc = new Graph(id);
 
-         // Initialize the transitive closure matrix
-         tc = new boolean[first.id.length()][first.id.length()];
-         for (int i = 0; i < first.id.length(); i++) {
-            for (int j = 0; j < first.id.length(); j++) {
-               if (i == j) {
-                  tc[i][j] = true;
-               } else {
-                  tc[i][j] = false;
+         // Create a map to store the vertex IDs
+         Map<String, Vertex> vertices = new HashMap<>();
+         Vertex v = first;
+         while (v != null) {
+            vertices.put(v.id, tc.createVertex(v.id));
+            v = v.next;
+         }
+
+         // Create the transitive closure matrix using the adjacency matrix
+         int[][] adjMatrix = createAdjMatrix();
+         int n = adjMatrix.length;
+         int[][] transitiveClosure = new int[n][n];
+         for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+               if (i == j || adjMatrix[i][j] > 0) {
+                  transitiveClosure[i][j] = 1;
+               }
+            }
+         }
+         for (int k = 0; k < n; k++) {
+            for (int i = 0; i < n; i++) {
+               for (int j = 0; j < n; j++) {
+                  transitiveClosure[i][j] |= (transitiveClosure[i][k] & transitiveClosure[k][j]);
                }
             }
          }
 
-         // Calculate the transitive closure matrix using the Floyd-Warshall algorithm
-         Vertex current = first;
-         while (current != null) {
-            // Mark all vertices that are reachable from the current vertex
-            Vertex reachable = current.first.target;
-            while (reachable != null) {
-               tc[current.id.charAt(0) - '0'][reachable.id.charAt(0) - '0'] = true;
-               reachable = reachable.first != null ? reachable.first.target : null;
-            }
-            current = current.next;
-         }
-         for (int k = 0; k < first.id.length(); k++) {
-            for (int i = 0; i < first.id.length(); i++) {
-               for (int j = 0; j < first.id.length(); j++) {
-                  tc[i][j] = tc[i][j] || (tc[i][k] && tc[k][j]);
+         // Create the arcs in the transitive closure graph
+         for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+               if (transitiveClosure[i][j] == 1) {
+                  tc.createArc("", vertices.get(getVertex(i).id), vertices.get(getVertex(j).id));
                }
             }
          }
 
-         // Create the vertices and arcs of the transitive closure graph
-         current = first;
-         while (current != null) {
-            tcGraph.createVertex(current.id);
-            current = current.next;
-         }
-         for (int i = 0; i < first.id.length(); i++) {
-            for (int j = 0; j < first.id.length(); j++) {
-               if (tc[i][j]) {
-                  tcGraph.createArc("a" + i + "_" + j, tcGraph.getVertexById(String.valueOf(i)),
-                          tcGraph.getVertexById(String.valueOf(j)));
-               }
-            }
-         }
-
-         return tcGraph;
+         return tc;
       }
 
-      public Vertex getVertexById(String id) {
-         Vertex current = first;
-         while (current != null) {
-            if (current.id.equals(id)) {
-               return current;
-            }
-            current = current.next;
+      /**
+       * Returns the vertex at the specified index.
+       */
+      public Vertex getVertex(int index) {
+         Vertex v = first;
+         for (int i = 0; i < index; i++) {
+            v = v.next;
          }
-         return null;
-      }
-
-      public void printTransitiveMatrix() {
-         System.out.print("  ");
-         for (int i = 0; i < first.id.length(); i++) {
-            System.out.print(i + " ");
-         }
-         System.out.println();
-         for (int i = 0; i < first.id.length(); i++) {
-            System.out.print(i + " ");
-            for (int j = 0; j < first.id.length(); j++) {
-               System.out.print((tc[i][j] ? 1 : 0) + " ");
-            }
-            System.out.println();
-         }
+         return v;
       }
    }
+
 }

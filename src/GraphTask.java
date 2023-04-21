@@ -11,6 +11,7 @@ public class GraphTask {
 
    /** Actual main method to run examples and everything. */
    public void run() {
+      // average : 118002(ms) for graph with 2000+ vertices
       Graph g = new Graph("G");
       Vertex v1 = g.createVertex("1");
       Vertex v2 = g.createVertex("2");
@@ -18,27 +19,24 @@ public class GraphTask {
       Vertex v4 = g.createVertex("4");
       g.createArc("a1", v1, v2);
       g.createArc("a2", v1, v3);
-      g.transitiveClosure();
+      g.createArc("a3", v1, v4);
+      g.createArc("a4", v2, v3);
+      g.createArc("a5", v2, v4);
+      g.createArc("a6", v3, v4);
+      g.createArc("a7", v2, v1);
+      g.createArc("a8", v4, v1);
 
-      Graph g1 = new Graph("G");
-      Vertex V1 = g1.createVertex("1");
-      Vertex V2 = g1.createVertex("2");
-      Vertex V3 = g1.createVertex("3");
-      Vertex V4 = g1.createVertex("4");
-      g1.createArc("a1", V1, V2);
-      g1.createArc("a2", V1, V3);
-      g1.createArc("a3", V2, V1);
-      g1.createArc("a4", V2, V3);
-      g1.createArc("a5", V1, V4);
-      g1.transitiveClosure();
+      // print the original graph
+      System.out.println("Original graph:");
+      System.out.println(g.toString());
 
-      Graph g2 = new Graph("G");
-      g2.createRandomSimpleGraph(2001, 2002);
-      long start = System.nanoTime();
-      g2.transitiveClosure();
-      long finish = System.nanoTime();
-      long diff = finish - start;
-      System.out.printf("%34s%11d%n", "time (ms): ", diff / 1000000); // average : 118002(ms)
+      // compute the transitive closure of the graph
+      Graph tc = g.transitiveClosure();
+
+      // print the transitive closure of the graph
+      System.out.println("Transitive closure of the graph:");
+      System.out.println(tc.toString());
+
    }
 
    /**
@@ -92,7 +90,7 @@ public class GraphTask {
 
       Arc (String s) {
          this (s, null, null);
-      }
+      } // First, create the adjacency matrix
 
       @Override
       public String toString() {
@@ -250,46 +248,82 @@ public class GraphTask {
          }
       }
 
-      /**The following method is based on the Depth-First Search(DFS) graph traversal method
-       * */
-      public void transitiveClosure() {
-         // First, create the adjacency matrix
-         int[][] adjMatrix = createAdjMatrix();
+      public Graph transitiveClosure() {
+         Graph tcGraph = new Graph("Transitive Closure");
 
-         // Create a boolean matrix to store the transitive closure
-         tc = new boolean[adjMatrix.length][adjMatrix.length];
-
-         // For each vertex i, perform a DFS and mark all reachable vertices j
-         for (int i = 0; i < adjMatrix.length; i++) {
-            boolean[] visited = new boolean[adjMatrix.length];
-            dfs(i, i, visited, adjMatrix);
+         // Initialize the transitive closure matrix
+         tc = new boolean[first.id.length()][first.id.length()];
+         for (int i = 0; i < first.id.length(); i++) {
+            for (int j = 0; j < first.id.length(); j++) {
+               if (i == j) {
+                  tc[i][j] = true;
+               } else {
+                  tc[i][j] = false;
+               }
+            }
          }
 
-         // Print the transitive closure matrix
-         System.out.println("Transitive closure:");
-         for (boolean[] booleans : tc) {
-            for (boolean aBoolean : booleans) {
-               System.out.print(aBoolean ? "1 " : "0 ");
+         // Calculate the transitive closure matrix using the Floyd-Warshall algorithm
+         Vertex current = first;
+         while (current != null) {
+            // Mark all vertices that are reachable from the current vertex
+            Vertex reachable = current.first.target;
+            while (reachable != null) {
+               tc[current.id.charAt(0) - '0'][reachable.id.charAt(0) - '0'] = true;
+               reachable = reachable.first != null ? reachable.first.target : null;
+            }
+            current = current.next;
+         }
+         for (int k = 0; k < first.id.length(); k++) {
+            for (int i = 0; i < first.id.length(); i++) {
+               for (int j = 0; j < first.id.length(); j++) {
+                  tc[i][j] = tc[i][j] || (tc[i][k] && tc[k][j]);
+               }
+            }
+         }
+
+         // Create the vertices and arcs of the transitive closure graph
+         current = first;
+         while (current != null) {
+            tcGraph.createVertex(current.id);
+            current = current.next;
+         }
+         for (int i = 0; i < first.id.length(); i++) {
+            for (int j = 0; j < first.id.length(); j++) {
+               if (tc[i][j]) {
+                  tcGraph.createArc("a" + i + "_" + j, tcGraph.getVertexById(String.valueOf(i)),
+                          tcGraph.getVertexById(String.valueOf(j)));
+               }
+            }
+         }
+
+         return tcGraph;
+      }
+
+      public Vertex getVertexById(String id) {
+         Vertex current = first;
+         while (current != null) {
+            if (current.id.equals(id)) {
+               return current;
+            }
+            current = current.next;
+         }
+         return null;
+      }
+
+      public void printTransitiveMatrix() {
+         System.out.print("  ");
+         for (int i = 0; i < first.id.length(); i++) {
+            System.out.print(i + " ");
+         }
+         System.out.println();
+         for (int i = 0; i < first.id.length(); i++) {
+            System.out.print(i + " ");
+            for (int j = 0; j < first.id.length(); j++) {
+               System.out.print((tc[i][j] ? 1 : 0) + " ");
             }
             System.out.println();
          }
       }
-
-      /**Actual DFS algorithm
-       * @param i is one of the vertex we want to explore
-       * @param j is another vertex we want to explore
-       * @param visited is a boolean matrix which marks the vertices we have already visited
-       * @param adjMatrix is an adjacency matrix for a given graph
-       * */
-      private void dfs(int i, int j, boolean[] visited, int[][] adjMatrix) {
-         visited[j] = true;
-         tc[i][j] = true;
-         for (int k = 0; k < adjMatrix.length; k++) {
-            if (adjMatrix[j][k] == 1 && !visited[k])
-               dfs(i, k, visited, adjMatrix);
-         }
-      }
-
    }
-
 }

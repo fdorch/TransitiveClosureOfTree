@@ -269,6 +269,8 @@ public class GraphTask {
 
       /**
        * Returns the vertex at the specified index.
+       * @param int index
+       * @return Vertex object for the given index
        */
       public Vertex getVertex(int index) {
          Vertex v = first;
@@ -278,5 +280,6 @@ public class GraphTask {
          return v;
       }
    }
-
 }
+
+
